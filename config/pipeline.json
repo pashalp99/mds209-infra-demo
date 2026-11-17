@@ -1,0 +1,25 @@
+{
+  "seed": 209,
+  "start_date": "2026-01-01",
+  "end_date": "2026-10-31",
+  "opening_hours": { "first": 10, "last": 21 },
+  "paths": {
+    "seeds": "seeds",
+    "landing": "data/landing",
+    "raw": "data/raw",
+    "lake": "data/lake/bronze",
+    "warehouse": "data/warehouse.duckdb",
+    "truth": "data/_truth",
+    "reports": "reports"
+  },
+  "forecast": {
+    "backtest_as_of": "2026-10-24",
+    "plan_as_of": "2026-10-31",
+    "horizon_days": 7,
+    "lookback_weeks": 4,
+    "profile_weeks": 8,
+    "stock_buffer": 0.1,
+    "portions_per_staff_hour": 10,
+    "min_staff_per_shift": 3
+  }
+}

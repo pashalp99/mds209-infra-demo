@@ -1,0 +1,16 @@
+channel,source_item_name,item_id
+pos,Bebek Goreng Paket A,BG01
+pos,Bebek Bakar Paket A,BB01
+pos,Bebek Sambal Ijo,BS01
+pos,Ayam Goreng Paket,AG01
+pos,Es Teh Manis,ET01
+gofood,Paket Bebek Goreng + Nasi,BG01
+gofood,Paket Bebek Bakar + Nasi,BB01
+gofood,Bebek Sambal Ijo + Nasi,BS01
+gofood,Paket Ayam Goreng + Nasi,AG01
+gofood,Es Teh Manis,ET01
+grabfood,BEBEK GRG PKT A,BG01
+grabfood,BEBEK BKR PKT A,BB01
+grabfood,BEBEK SMBL IJO,BS01
+grabfood,AYAM GRG PKT,AG01
+grabfood,ES TEH MANIS,ET01

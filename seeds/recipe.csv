@@ -1,0 +1,9 @@
+item_id,ingredient,unit,qty_per_portion
+BG01,bebek,ekor,0.5
+BG01,beras,kg,0.15
+BB01,bebek,ekor,0.5
+BB01,beras,kg,0.15
+BS01,bebek,ekor,0.5
+BS01,beras,kg,0.15
+AG01,ayam,ekor,0.25
+AG01,beras,kg,0.15
