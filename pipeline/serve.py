@@ -15,6 +15,7 @@ from datetime import datetime
 import duckdb
 
 from .config import CFG, ROOT, banner, path, render
+from .dashboard import build as build_dashboard
 
 LAYERS = [
     ("01 Capture", "pipeline/capture.py simulates monthly exports", "Datastream change capture from SQL Server"),
@@ -169,6 +170,7 @@ def main() -> None:
     run_sql(con, "20_backtest.sql", common)
     run_sql(con, "30_stock_plan.sql", {**common, "as_of": fc["plan_as_of"]})
     run_sql(con, "40_staff_plan.sql", {**common, "as_of": fc["plan_as_of"]})
+    run_sql(con, "50_dashboard.sql", common)
 
     fc["plan_start"], fc["plan_end"] = con.execute("SELECT min(date), max(date) FROM fc_plan").fetchone()
     path("reports").mkdir(parents=True, exist_ok=True)
@@ -176,9 +178,11 @@ def main() -> None:
         export_csv(con, table)
     report = path("reports") / "report.html"
     report.write_text(build_report(con, fc), encoding="utf-8")
+    dashboard = build_dashboard(con, fc)
     con.close()
-    print(f"Wrote reports/report.html plus backtest.csv, stock_plan.csv and staff_plan.csv.")
-    print(f"Open it with:  open {report.relative_to(ROOT)}")
+    print("Wrote reports/dashboard.html (for the business), reports/report.html (for the data team)")
+    print("      and backtest.csv, stock_plan.csv, staff_plan.csv.")
+    print(f"Open the dashboard with:  open {dashboard.relative_to(ROOT)}")
 
 
 if __name__ == "__main__":

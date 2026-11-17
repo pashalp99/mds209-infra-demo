@@ -3,31 +3,30 @@
 --   fc_naive         learns from recorded sales, including the zeros after a sell-out
 --   fc_censor_aware  first estimates what customers wanted after the sell-out (story 1)
 
-CREATE OR REPLACE TABLE {table} AS
+-- Part 1. History with an estimate of true demand for every hour ({table}_history).
+CREATE OR REPLACE TABLE {table}_history AS
 WITH history AS (
     SELECT *
     FROM mart_demand_hourly
-    WHERE date > DATE '{as_of}' - INTERVAL {lookback_days} DAY
+    WHERE date > DATE '{as_of}' - INTERVAL {profile_days} DAY
       AND date <= DATE '{as_of}'
 ),
 
 -- Step 1. The normal hourly pattern of each item, learned only from days it did NOT sell out
--- (a longer window, and outside Ramadan, when the pattern is completely different).
+-- (outside Ramadan, when the pattern is completely different).
 clean_days AS (
     SELECT outlet_code, item_id, date
-    FROM mart_demand_hourly
-    WHERE date > DATE '{as_of}' - INTERVAL {profile_days} DAY
-      AND date <= DATE '{as_of}'
-      AND NOT is_ramadan
+    FROM history
+    WHERE NOT is_ramadan
     GROUP BY outlet_code, item_id, date
     HAVING NOT bool_or(is_censored) AND sum(portions) > 0
 ),
 profile AS (
-    SELECT m.outlet_code, m.item_id, m.hour,
-           sum(m.portions) / sum(sum(m.portions)) OVER (PARTITION BY m.outlet_code, m.item_id) AS share
-    FROM mart_demand_hourly AS m
+    SELECT h.outlet_code, h.item_id, h.hour,
+           sum(h.portions) / sum(sum(h.portions)) OVER (PARTITION BY h.outlet_code, h.item_id) AS share
+    FROM history AS h
     JOIN clean_days USING (outlet_code, item_id, date)
-    GROUP BY m.outlet_code, m.item_id, m.hour
+    GROUP BY h.outlet_code, h.item_id, h.hour
 ),
 
 -- Step 2. On a sell-out day, scale up what sold before the sell-out using that pattern.
@@ -41,25 +40,31 @@ sell_out_days AS (
     JOIN profile AS p USING (outlet_code, item_id, hour)
     GROUP BY h.outlet_code, h.item_id, h.date
     HAVING bool_or(h.is_censored)
-),
-unconstrained AS (
-    SELECT h.*,
-           CASE WHEN h.is_censored AND s.share_before >= 0.2   -- too early a sell-out: too little to scale
-                THEN s.sold_before / s.share_before * p.share
-                ELSE h.portions END AS demand_estimate
-    FROM history AS h
-    LEFT JOIN profile AS p USING (outlet_code, item_id, hour)
-    LEFT JOIN sell_out_days AS s USING (outlet_code, item_id, date)
-),
+)
+SELECT
+    h.outlet_code, h.item_id, h.date, h.dow, h.hour, h.portions, h.is_censored,
+    CASE WHEN h.is_censored AND s.share_before >= 0.2   -- too early a sell-out: too little to scale
+         THEN greatest(h.portions, s.sold_before / s.share_before * p.share)
+         ELSE h.portions END AS demand_estimate
+FROM history AS h
+LEFT JOIN profile AS p USING (outlet_code, item_id, hour)
+LEFT JOIN sell_out_days AS s USING (outlet_code, item_id, date);
 
+-- Part 2. The forecast itself, from the most recent weeks of that history.
+CREATE OR REPLACE TABLE {table} AS
+WITH recent AS (
+    SELECT *
+    FROM {table}_history
+    WHERE date > DATE '{as_of}' - INTERVAL {lookback_days} DAY
+),
 naive AS (
     SELECT outlet_code, item_id, dow, hour, avg(portions) AS f
-    FROM history
+    FROM recent
     GROUP BY ALL
 ),
 censor_aware AS (
     SELECT outlet_code, item_id, dow, hour, avg(demand_estimate) AS f
-    FROM unconstrained
+    FROM recent
     GROUP BY ALL
 ),
 targets AS (

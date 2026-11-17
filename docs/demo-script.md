@@ -22,7 +22,14 @@ Talk over the output, one layer at a time:
 - **Transform:** staging → clean → mart. Point out `clean_sales` vs `mart_demand_hourly` row counts: order lines vs. model grain.
 - **Checks:** all PASS, two INFO lines. “Sold-out days are not an error; they are a fact the model must respect.”
 
-Open `reports/report.html`: section 3 (story 1 in numbers), then sections 4 and 5 (story 4: one forecast, two decisions).
+Open `reports/dashboard.html`: this is what the outlet and area managers would see.
+- Tiles: how many birds to order, staff shifts needed, and what sell-outs cost in the last 4 weeks.
+- Click **PNK-01**: in the bottom-right chart, recorded sales flatten at exactly 100 portions, the
+  50-bird standing order. Story 1 in one picture.
+- Staff per shift: the same forecast, turned into a headcount (story 4).
+- “Can we trust these numbers?”: the checks the business never sees fail, but should know ran.
+
+Then `reports/report.html` for the data-team view: the backtest that proves the censor-aware forecast is better.
 
 ## 2 · Break it: a renamed dish (3 min)
 
